@@ -1,1 +1,1 @@
-web: gunicorn app:face_server
+web: gunicorn app:app
