@@ -13,8 +13,8 @@ ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['ANNOTATED_FOLDER'] = ANNOTATED_FOLDER
-app.config['ssl_context'] = "adhoc"
-app.secret_key = "super secret key"
+#app.config['ssl_context'] = "adhoc"
+#app.secret_key = "super secret key"
 
 
 def allowed_file(filename):
@@ -81,6 +81,3 @@ def bootstrap_file():
 def uploaded_file(filename):
     return send_from_directory(app.config['ANNOTATED_FOLDER'],
                                filename)
-
-if __name__ == "__main__":
-    app.run(port=80, ssl_context='adhoc')
