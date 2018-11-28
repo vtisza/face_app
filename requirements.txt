@@ -1,5 +1,6 @@
 cmake
 dlib==19.16.0
+python3-tk
 matplotlib==2.0.2
 gunicorn==19.9.0
 face-recognition==1.2.3
