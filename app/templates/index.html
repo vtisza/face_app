@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+   <link rel="stylesheet" href="bootstrap.min.css">
+   <link rel="stylesheet" href="main.css">
+</head>
+
+<body onload="init();">
+   <div id=data_tab>
+      <h1>Face recognizer and validator</h1>
+      <h3><i>Please show your ID card and face for the webcamera or upload an image for validation</i>
+         <h3>
+            <button onClick=convertCanvasToImage() class="btn btn-primary">Snap Photo</button>
+            <br><b>Or</b><br>
+            <form method=post enctype=multipart/form-data> <p>
+               <input type=file name=file>
+               <input type=submit value=Upload class="btn btn-secondary">
+            </form>
+   </div>
+</body>
+<script>
+   console.clear();
+
+   ;
+   (function () {
+
+      navigator.getUserMedia = navigator.getUserMedia ||
+         navigator.webkitGetUserMedia ||
+         navigator.mozGetUserMedia ||
+         navigator.msGetUserMedia;
+
+      if (!navigator.getUserMedia) {
+         return false;
+      }
+
+      var width = 0,
+         height = 0;
+
+      var canvas = document.createElement('canvas'),
+         ctx = canvas.getContext('2d');
+      document.getElementById("data_tab").appendChild(canvas);
+
+      var video = document.createElement('video'),
+         track;
+      video.setAttribute('autoplay', true);
+
+      window.vid = video;
+
+      function getWebcam() {
+
+         navigator.getUserMedia({
+            video: true,
+            audio: false
+         }, function (stream) {
+            video.src = window.URL.createObjectURL(stream);
+            track = stream.getTracks()[0];
+         }, function (e) {
+            console.error('Rejected!', e);
+         });
+      }
+
+      getWebcam();
+
+      var rotation = 0,
+         loopFrame,
+         centerX,
+         centerY,
+         twoPI = Math.PI * 2;
+
+      function loop() {
+
+         loopFrame = requestAnimationFrame(loop);
+
+         ctx.save();
+
+         ctx.globalAlpha = 0.1;
+         ctx.drawImage(video, 0, 0, width, height);
+
+         ctx.restore();
+
+      }
+
+      function startLoop() {
+         loopFrame = loopFrame || requestAnimationFrame(loop);
+      }
+
+      video.addEventListener('loadedmetadata', function () {
+         width = canvas.width = video.videoWidth;
+         height = canvas.height = video.videoHeight;
+         centerX = width / 2;
+         centerY = height / 2;
+         startLoop();
+      });
+
+      canvas.addEventListener('click', function () {
+         if (track) {
+            if (track.stop) {
+               track.stop();
+            }
+            track = null;
+         } else {
+            getWebcam();
+         }
+      });
+
+
+   })()
+
+   function convertCanvasToImage() {
+      let canvas = document.getElementsByTagName("canvas")[0];
+      document.getElementById('CV')
+      var image = new Image();
+      image.src = canvas.toDataURL("image/jpeg");
+      //console.log(image[1]);
+      //document.body.appendChild(image);
+      sendBaseToServer(image);
+      return;
+   }
+
+   var sendBaseToServer = function (base64) {
+
+      //let base64Image = base64.arrayBuffer();
+      let base64Image = atob(base64.src.split(';base64,')[1]);
+      //let base64Image = base64.src.split(';base64,').pop();
+      //let base64Image = base64.src.replace("image/png", "image/octet-stream");
+      var array = [];
+      for (var i = 0; i < base64Image.length; i++) {
+         array.push(base64Image.charCodeAt(i));
+      }
+
+      var currentdate = new Date();
+      var datetime = "_" + currentdate.getFullYear() +
+         +(currentdate.getMonth() + 1) +
+         currentdate.getDate() + "_" +
+         +currentdate.getHours() + "_" +
+         currentdate.getMinutes() + "_" +
+         currentdate.getSeconds();
+
+      var fileName = "webcam" + datetime + ".jpg";
+      var blobAttrs = {
+         type: "image/jpeg"
+      };
+      //var file = new File(array, fileName, blobAttrs);
+      var file = new Blob([new Uint8Array(array)], {
+         type: 'image/jpeg'
+      });
+      var data = new FormData();
+      data.append('file', file, fileName);
+
+      fetch("/", {
+         method: 'POST',
+         body: data
+      }).then(function (response) {
+         return response.text()
+      }).then(function (text) {
+         document.getElementById("data_tab").innerHTML = text;
+      });
+
+   };
+</script>
+
+</html>
